@@ -1,0 +1,152 @@
+{
+  "entities": {
+    "vital_reading": {
+      "title": "Vital Reading",
+      "description": "ESP32 DS18B20 and MAX30102 vital sign reading record",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "Unique identifier of the ESP32 hardware device"
+        },
+        "temperatureC": {
+          "type": "number",
+          "description": "Human body temperature in Celsius from DS18B20"
+        },
+        "temperatureF": {
+          "type": "number",
+          "description": "Human body temperature in Fahrenheit"
+        },
+        "heartRate": {
+          "type": "number",
+          "description": "Heart rate in beats per minute from MAX30102"
+        },
+        "spO2": {
+          "type": "number",
+          "description": "Blood oxygen saturation percentage from MAX30102"
+        },
+        "tempStatus": {
+          "type": "string",
+          "description": "normal, fever, hypothermia"
+        },
+        "hrStatus": {
+          "type": "string",
+          "description": "normal, tachycardia, bradycardia"
+        },
+        "spO2Status": {
+          "type": "string",
+          "description": "normal, hypoxemia, critical"
+        },
+        "isAbnormal": {
+          "type": "boolean",
+          "description": "Flag indicating if any vital sign breached safe threshold"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of reading: esp32, manual, or simulator"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp string of when reading occurred"
+        }
+      },
+      "required": ["deviceId", "temperatureC", "heartRate", "spO2", "isAbnormal", "timestamp"]
+    },
+    "alert_log": {
+      "title": "Alert Log",
+      "description": "Abnormal threshold breach alert event",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "ESP32 device identifier"
+        },
+        "alertType": {
+          "type": "string",
+          "description": "Category of vital sign alert"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human readable alert message"
+        },
+        "severity": {
+          "type": "string",
+          "description": "warning or critical"
+        },
+        "value": {
+          "type": "number",
+          "description": "Sensor value that triggered alert"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Breached threshold limit"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp of alert event"
+        },
+        "acknowledged": {
+          "type": "boolean",
+          "description": "Whether user acknowledged the alarm"
+        }
+      },
+      "required": ["deviceId", "alertType", "message", "severity", "timestamp", "acknowledged"]
+    },
+    "threshold_config": {
+      "title": "Threshold Configuration",
+      "description": "Configurable safety thresholds for vital signs",
+      "type": "object",
+      "properties": {
+        "tempHigh": {
+          "type": "number",
+          "description": "Fever high threshold in Celsius"
+        },
+        "tempLow": {
+          "type": "number",
+          "description": "Hypothermia low threshold in Celsius"
+        },
+        "hrHigh": {
+          "type": "number",
+          "description": "Tachycardia high heart rate threshold in BPM"
+        },
+        "hrLow": {
+          "type": "number",
+          "description": "Bradycardia low heart rate threshold in BPM"
+        },
+        "spO2Low": {
+          "type": "number",
+          "description": "Low SpO2 warning threshold percentage"
+        },
+        "spO2Critical": {
+          "type": "number",
+          "description": "Critical SpO2 threshold percentage"
+        },
+        "audioAlarmEnabled": {
+          "type": "boolean",
+          "description": "Whether audible alarm is triggered on alert"
+        }
+      },
+      "required": ["tempHigh", "tempLow", "hrHigh", "hrLow", "spO2Low", "spO2Critical"]
+    }
+  },
+  "firestore": {
+    "/vitals/{vitalId}": {
+      "schema": {
+        "$ref": "#/entities/vital_reading"
+      },
+      "description": "Real-time and historical vital telemetry readings from ESP32 DS18B20 and MAX30102 sensors"
+    },
+    "/alerts/{alertId}": {
+      "schema": {
+        "$ref": "#/entities/alert_log"
+      },
+      "description": "Logs of abnormal sensor thresholds and safety alarms"
+    },
+    "/config/{configId}": {
+      "schema": {
+        "$ref": "#/entities/threshold_config"
+      },
+      "description": "User custom thresholds and alarm settings"
+    }
+  }
+}

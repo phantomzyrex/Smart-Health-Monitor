@@ -1,0 +1,8 @@
+{
+  "name": "Smart Health Monitor",
+  "description": "Dashboard of live Health Analytics",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidVitalReading(data) {
+      return data.keys().hasAll(['deviceId', 'temperatureC', 'heartRate', 'spO2', 'isAbnormal', 'timestamp'])
+        && data.keys().hasOnly(['deviceId', 'temperatureC', 'temperatureF', 'heartRate', 'spO2', 'tempStatus', 'hrStatus', 'spO2Status', 'isAbnormal', 'source', 'timestamp'])
+        && data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64
+        && (data.temperatureC is number || data.temperatureC is int) && data.temperatureC >= -50 && data.temperatureC <= 100
+        && (data.heartRate is number || data.heartRate is int) && data.heartRate >= 0 && data.heartRate <= 300
+        && (data.spO2 is number || data.spO2 is int) && data.spO2 >= 0 && data.spO2 <= 100
+        && data.isAbnormal is bool
+        && data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 64;
+    }
+
+    function isValidAlertLog(data) {
+      return data.keys().hasAll(['deviceId', 'alertType', 'message', 'severity', 'timestamp', 'acknowledged'])
+        && data.keys().hasOnly(['deviceId', 'alertType', 'message', 'severity', 'value', 'threshold', 'timestamp', 'acknowledged'])
+        && data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64
+        && data.alertType is string && data.alertType.size() >= 1 && data.alertType.size() <= 64
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 512
+        && data.severity is string && (data.severity == 'warning' || data.severity == 'critical')
+        && data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 64
+        && data.acknowledged is bool;
+    }
+
+    function isValidThresholdConfig(data) {
+      return data.keys().hasAll(['tempHigh', 'tempLow', 'hrHigh', 'hrLow', 'spO2Low', 'spO2Critical'])
+        && data.keys().hasOnly(['tempHigh', 'tempLow', 'hrHigh', 'hrLow', 'spO2Low', 'spO2Critical', 'audioAlarmEnabled'])
+        && (data.tempHigh is number || data.tempHigh is int)
+        && (data.tempLow is number || data.tempLow is int)
+        && (data.hrHigh is number || data.hrHigh is int)
+        && (data.hrLow is number || data.hrLow is int)
+        && (data.spO2Low is number || data.spO2Low is int)
+        && (data.spO2Critical is number || data.spO2Critical is int);
+    }
+
+    // Default deny for unmatched documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection test document
+    match /test/connection {
+      allow get: if true;
+      allow write: if false;
+    }
+
+    // Real-time ESP32 vitals telemetry collection
+    match /vitals/{vitalId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(vitalId) && isValidVitalReading(incoming());
+      allow delete: if isValidId(vitalId);
+    }
+
+    // Abnormal vital alerts collection
+    match /alerts/{alertId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(alertId) && isValidAlertLog(incoming());
+      allow delete: if isValidId(alertId);
+    }
+
+    // Configurable thresholds collection
+    match /config/{configId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(configId) && isValidThresholdConfig(incoming());
+      allow delete: if isValidId(configId);
+    }
+  }
+}
